@@ -14,7 +14,9 @@ import { IResponseStreamer } from '../types/types';
 
 export default async () => {
     console.log(chalk.yellowBright('[Twitch Games]: Запуск проверки игр на Twitch...'), new Date(Date.now()).toLocaleString());
-    const settings = await Settings.find();
+    const settings = await Settings.findOne();
+    if (!settings) return console.log(chalk.red('[Twitch Games]: You need to initialize app configuration first'));
+    const allowedLangs = process.env.APP_GAMES_ALLOWED_LANGS!.split(',') || ['en'];
 
     try {
         // Preparation
@@ -54,24 +56,18 @@ export default async () => {
         }
 
         // Handle fetched data
-        // TODO: No need to check if streamer banned every time
         twitchResponse.map(async (stream: IResponseStreamer) => {
-            // If streamer id is in the banned list or favorite list, skip him. Twitch API bugfix applied: skip ids that are not from ids list
-            if (!bannedStreamersIDs.includes(stream.user_id) && !favoriteStreamersIDs.includes(stream.user_id) && gamesIDs.includes(stream.game_id)) {
-                if (
-                    !streamersStatsIDs.includes(stream.user_id) && stream.language === 'en' && stream.viewer_count >= 1000
-                    || !streamersStatsIDs.includes(stream.user_id) && stream.language === 'ru' && stream.viewer_count >= 2000
-                ) {
-                    createStats(stream);
-                }
-            }
+            // Twitch API bugfix applied: skip ids that are not from ids list
+            // If streamer id is in the banned list or favorite list, skip him. Allow selected langs by default: en.
+            if (
+                !bannedStreamersIDs.includes(stream.user_id)
+                && !favoriteStreamersIDs.includes(stream.user_id)
+                && gamesIDs.includes(stream.game_id)
+                && allowedLangs.includes(stream.language)
+            ) {
+                if (!streamersStatsIDs.includes(stream.user_id) && stream.viewer_count >= 2000) createStats(stream);
 
-            // Allow only selected stream languages: EN, RU
-            // TODO: Use array of allowed languages instead of repeating lang checks
-            if (!bannedStreamersIDs.includes(stream.user_id) && stream.language === 'en'
-            || !bannedStreamersIDs.includes(stream.user_id) && stream.language === 'ru') {
                 const gameIndex = gamesIDs.indexOf(stream.game_id); // get game id that streamer currently playing
-                console.log(gameIndex, stream.game_name, stream.user_name)
                 const gameCover = dbGames[gameIndex].boxArt.replace('XSIZExYSIZE', '100x140'); // get game box art
                 const { minViewers } = dbGames[gameIndex].search; // min amount of viewers required to trigger notification
 
@@ -101,11 +97,14 @@ export default async () => {
                             game: stream.game_name,
                             streamer: stream.user_name,
                         },
-                    }, settings[0].notifications.games);
-                    createVodSuggestion({
-                        user_id: stream.user_id,
-                        games: [stream.game_name],
-                    });
+                    }, settings.notifications.games);
+                    if (settings.enableAddVodFavoriteGames) {
+                        createVodSuggestion({
+                            streamId: stream.id,
+                            userId: stream.user_id,
+                            games: [stream.game_name],
+                        });
+                    }
                     updateGameHistory({ stream, isFavorite: false });
                     banStreamer(stream);
                 }
