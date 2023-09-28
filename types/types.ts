@@ -27,6 +27,12 @@ export interface IResponseVod {
     duration: string;
 }
 
+export interface IResponseToken {
+    access_token: string;
+    expires_in: number;
+    token_type: string;
+}
+
 export interface IPushNotification {
     title?: string;
     message: string;
