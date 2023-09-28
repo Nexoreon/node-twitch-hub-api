@@ -2,10 +2,13 @@ import { Schema, model } from 'mongoose';
 
 export interface ISettings {
     _doc: object;
+    accessToken: string;
     enableFollowsCheck: boolean;
     enableGamesCheck: boolean;
     enableReportCreation: boolean;
     enableVodDataImport: boolean;
+    enableAddVodNewGames: boolean;
+    enableAddVodFavoriteGames: boolean;
     notifications: {
         follows: {
             push: boolean;
@@ -27,6 +30,7 @@ export interface ISettings {
 }
 
 const settingsSchema: Schema<ISettings> = new Schema({
+    accessToken: String,
     enableFollowsCheck: {
         type: Boolean,
         default: true,
@@ -40,6 +44,14 @@ const settingsSchema: Schema<ISettings> = new Schema({
         default: true,
     },
     enableVodDataImport: {
+        type: Boolean,
+        default: true,
+    },
+    enableAddVodFavoriteGames: {
+        type: Boolean,
+        default: true,
+    },
+    enableAddVodNewGames: {
         type: Boolean,
         default: true,
     },
