@@ -14,7 +14,7 @@ const app = express();
 app.use(express.json());
 app.use(morgan('dev'));
 app.use(cors());
-app.use('/api/v1', systemRoutes);
+app.use('/', systemRoutes);
 app.use('/api/v1/twitch', twitchRoutes);
 app.all('*', (req: Request, res: Response, next: NextFunction) => {
     next(new AppError(`Unable to find ${req.originalUrl} on the server`, 404));
