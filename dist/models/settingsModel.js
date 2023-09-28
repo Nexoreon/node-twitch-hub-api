@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = require("mongoose");
 const settingsSchema = new mongoose_1.Schema({
+    accessToken: String,
     enableFollowsCheck: {
         type: Boolean,
         default: true,
@@ -15,6 +16,14 @@ const settingsSchema = new mongoose_1.Schema({
         default: true,
     },
     enableVodDataImport: {
+        type: Boolean,
+        default: true,
+    },
+    enableAddVodFavoriteGames: {
+        type: Boolean,
+        default: true,
+    },
+    enableAddVodNewGames: {
         type: Boolean,
         default: true,
     },

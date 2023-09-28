@@ -15,9 +15,15 @@ dotenv_1.default.config({ path: './config.env' });
 const app_1 = __importDefault(require("./app"));
 const settingsModel_1 = __importDefault(require("./models/settingsModel"));
 const TelegramBot_1 = __importDefault(require("./utils/TelegramBot"));
+const functions_1 = require("./utils/functions");
+let settings;
 // Connect to database
 mongoose_1.default.connect(process.env.DB_URL)
-    .then(() => console.log(chalk_1.default.green('[Датабаза]: Успешное соединение с датабазой!')))
+    .then(async () => {
+    console.log(chalk_1.default.green('[Датабаза]: Успешное соединение с датабазой!'));
+    settings = await settingsModel_1.default.findOne();
+    (0, functions_1.initializeApp)(settings);
+})
     .catch((err) => console.log('[Датабаза]: Ошибка соединения с датабазой!', err));
 // Start server
 let server;
@@ -40,6 +46,7 @@ else {
 }
 // Shutdown server
 const shutdownServer = async (err) => {
+    // TODO: Use global settings variable
     const settings = await settingsModel_1.default.find();
     const { notifications } = settings[0];
     if (notifications.error.telegram) {

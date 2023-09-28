@@ -40,6 +40,11 @@ const handleValidationErrorDB = (err) => {
     const message = `Неправильно введенные данные. ${errors.join('. ')}`;
     return new appError_1.default(message, 400);
 };
+// TODO: Handle token related error
+const handleExpiredToken = (err) => {
+    console.log(err);
+    return new appError_1.default('Twitch token expired. Restart your application to get new one!', 401);
+};
 const handleJWTError = () => new appError_1.default('Невалидный токен. Пожалуйста переавторизируйтесь!', 401);
 const handleJWTExpiredError = () => new appError_1.default('Ваш токен авторизации истёк! Пожалуйста переавторизируйтесь!', 401);
 exports.default = (err, req, res, next) => {
@@ -55,6 +60,7 @@ exports.default = (err, req, res, next) => {
         err = handleJWTError();
     if (err.name === 'TokenExpiredError')
         err = handleJWTExpiredError();
+    // if (err.response.status === 404) err = handleExpiredToken(err);
     if (process.env.NODE_ENV === 'development')
         return sendDevErrors(err, res);
     if (process.env.NODE_ENV === 'production')

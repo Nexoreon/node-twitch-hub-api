@@ -52,6 +52,10 @@ const twitchWatchlistSchema = new mongoose_1.Schema({
             default: false,
         },
         isShortTerm: Boolean,
+        withNewGames: {
+            type: Boolean,
+            default: false,
+        },
         watchLater: Boolean,
     },
     sortDate: {

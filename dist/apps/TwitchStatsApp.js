@@ -47,7 +47,9 @@ exports.default = async () => {
             });
         });
         const followsHistoryArray = [];
-        followsHistory.map(({ streamHistory, name }) => followsHistoryArray.push({ userName: name, games: streamHistory })); // TODO: ADD INTERFACE
+        followsHistory.map(({ streamHistory, name }) => {
+            followsHistoryArray.push({ userName: name, games: streamHistory });
+        });
         console.log(chalk_1.default.greenBright('[Twitch Stats]: Ежедневный отчёт о стримах готов! Добавление отчёта в датабазу...'));
         // Create report
         await twitchReportModel_1.default.create({

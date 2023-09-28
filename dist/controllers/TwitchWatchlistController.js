@@ -163,7 +163,7 @@ exports.addVideo = (0, catchAsync_1.default)(async (req, res, next) => {
                 author: vidInfo.user_name,
                 ...(!isLiveVod && { duration, thumbnail: vidInfo.thumbnail_url }),
             };
-            await axios_1.default.get(`https://api.twitch.tv/helix/users/follows?to_id=${vidInfo.user_id}&first=1`, {
+            await axios_1.default.get(`https://api.twitch.tv/helix/channels/followers?broadcaster_id=${vidInfo.user_id}`, {
                 headers: TwitchCommon_1.twitchHeaders,
             })
                 .then((user) => {

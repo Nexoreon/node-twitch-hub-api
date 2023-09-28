@@ -106,18 +106,31 @@ const sendNotification = ({ title, message, link, icon, meta }, method = { push:
     }
 };
 exports.sendNotification = sendNotification;
-const createVodSuggestion = async ({ user_id, games }) => {
-    const getVideo = await axios_1.default.get(`https://api.twitch.tv/helix/videos?user_id=${user_id}`, {
+const createVodSuggestion = async ({ streamId, userId, games, flags }) => {
+    console.log('createVodSuggesion', userId, games, flags);
+    const getVideo = await axios_1.default.get(`https://api.twitch.tv/helix/videos?user_id=${userId}`, {
         headers: exports.twitchHeaders,
     });
-    const getFollowers = await axios_1.default.get(`https://api.twitch.tv/helix/users/follows?to_id=${user_id}&first=1`, {
+    const getFollowers = await axios_1.default.get(`https://api.twitch.tv/helix/channels/followers?broadcaster_id=${userId}`, {
         headers: exports.twitchHeaders,
     });
     const data = getVideo.data.data[0];
-    const followers = getFollowers.data.total;
     const { id, title, user_name: author, created_at: streamDate, url } = data;
+    const followers = getFollowers.data.total;
+    console.log(streamId, id);
+    // Checks if streamId and VOD ID is the same, if not, the vod probably been deleted
+    // if (id !== streamId) {
+    //     return console.log(chalk.red('[Twitch Watchlist]: Stream ID and VOD ID aren\'t the same. Perhaps VOD isn\'t available anymore'));
+    // }
     // find existing suggestions with the same author and game
-    const suggestionExists = await twitchWatchlistModel_1.default.findOne({ author, games, relatedTo: { $exists: false } });
+    const suggestionExists = await twitchWatchlistModel_1.default.findOne({
+        $or: [{ author, games: { $in: games }, relatedTo: { $exists: false } }, { id, relatedTo: { $exists: false } }],
+    });
+    if (suggestionExists && id === suggestionExists.id) {
+        return twitchWatchlistModel_1.default.findOneAndUpdate({ id }, {
+            $addToSet: { games },
+        });
+    }
     await twitchWatchlistModel_1.default.create({
         id,
         title,
@@ -130,8 +143,9 @@ const createVodSuggestion = async ({ user_id, games }) => {
         },
         flags: {
             isSuggestion: true,
+            ...(flags && flags.newGame && { withNewGames: true }),
         },
-        ...(suggestionExists && { relatedTo: suggestionExists._id }),
+        ...(!flags && suggestionExists && { relatedTo: suggestionExists._id }),
     })
         .catch((err) => {
         if (err.code) {

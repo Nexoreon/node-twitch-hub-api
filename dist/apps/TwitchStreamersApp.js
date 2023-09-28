@@ -14,7 +14,7 @@ const twitchReportModel_1 = __importDefault(require("../models/twitchReportModel
 const TwitchCommon_1 = require("./TwitchCommon");
 const functions_1 = require("../utils/functions");
 const settingsModel_1 = __importDefault(require("../models/settingsModel"));
-const addToStreamHistory = async (userId, userName, gameName, notify) => {
+const addToStreamHistory = async (streamId, userId, userName, gameName, notify, addVod) => {
     const playedGames = await twitchReportModel_1.default.aggregate([
         { $match: { 'follows.userName': userName } },
         { $unwind: '$follows' },
@@ -27,11 +27,18 @@ const addToStreamHistory = async (userId, userName, gameName, notify) => {
     if (playedGames.length) {
         const games = playedGames[0].data;
         firstTime = !games.includes(gameName); // check if streamer already played that game before
-        console.log(userName, gameName, `notify: ${notify}`, `first time: ${firstTime}`); // TODO: Remove after testing
         if (notify && firstTime) {
             (0, TwitchCommon_1.sendNotification)({
                 message: `${userName} впервые играет в ${gameName}`,
             }, { telegram: true });
+            if (addVod) {
+                (0, TwitchCommon_1.createVodSuggestion)({
+                    streamId,
+                    userId,
+                    games: [gameName],
+                    flags: { newGame: true },
+                });
+            }
         }
     }
     await twitchStreamerModel_1.default.updateOne({ id: userId }, {
@@ -40,7 +47,9 @@ const addToStreamHistory = async (userId, userName, gameName, notify) => {
 };
 exports.default = async () => {
     console.log(chalk_1.default.hex('#a970ff')('[Twitch Streamers]: Запуск проверки избранных стримеров...', new Date(Date.now()).toLocaleString()));
-    const settings = await settingsModel_1.default.find();
+    const settings = await settingsModel_1.default.findOne();
+    if (!settings)
+        return console.log(chalk_1.default.red('[Twitch Streamers]: You need to initialize app configuration first'));
     try {
         // Preparation. Fetch data from DB
         (0, TwitchCommon_1.checkBannedStreamers)();
@@ -74,7 +83,7 @@ exports.default = async () => {
             const streamerData = following[index];
             if (!streamerData.streamHistory.map((game) => game.name).includes(streamer.game_name)
                 && streamer.game_name !== 'Just Chatting') {
-                addToStreamHistory(streamer.user_id, streamer.user_name, streamer.game_name, streamerData.flags.notifyOnNewGame);
+                addToStreamHistory(streamer.id, streamer.user_id, streamer.user_name, streamer.game_name, streamerData.flags.notifyOnNewGame, settings.enableAddVodNewGames);
             }
             if (gamesIDs.includes(streamer.game_id)) { // if streamer plays favorite game
                 streamer.avatar = following[index].avatar; // set streamer picture
@@ -100,11 +109,14 @@ exports.default = async () => {
                             game: streamer.game_name,
                             streamer: streamer.user_name,
                         },
-                    }, settings[0].notifications.follows);
-                    (0, TwitchCommon_1.createVodSuggestion)({
-                        user_id: streamer.user_id,
-                        games: [streamer.game_name],
-                    });
+                    }, settings.notifications.follows);
+                    if (settings.enableAddVodFavoriteGames) {
+                        (0, TwitchCommon_1.createVodSuggestion)({
+                            streamId: streamer.id,
+                            userId: streamer.user_id,
+                            games: [streamer.game_name],
+                        });
+                    }
                     (0, TwitchCommon_1.updateGameHistory)({ stream: streamer, isFavorite: true });
                     (0, TwitchCommon_1.banStreamer)(streamer);
                 }

@@ -3,6 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+/* eslint-disable no-console */
 const toad_scheduler_1 = require("toad-scheduler");
 const node_schedule_1 = __importDefault(require("node-schedule"));
 const axios_1 = __importDefault(require("axios"));
@@ -15,8 +16,12 @@ const cacheTwitchFollows_1 = __importDefault(require("./tasks/cacheTwitchFollows
 const cacheWatchlistVods_1 = __importDefault(require("./tasks/cacheWatchlistVods"));
 const backupReports_1 = __importDefault(require("./tasks/backupReports"));
 const checkIfEnabled = async (param) => {
-    const settings = await settingsModel_1.default.find();
-    return { ...settings[0]._doc }[param]; // fix weird ts behavior
+    const settings = await settingsModel_1.default.findOne();
+    if (!settings) {
+        console.log('[App]: You need to initialize app configuration first');
+        return false;
+    }
+    return { ...settings._doc }[param];
 };
 const scheduler = new toad_scheduler_1.ToadScheduler();
 // Schedule tasks execution

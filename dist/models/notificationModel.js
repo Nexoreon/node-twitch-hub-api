@@ -24,5 +24,5 @@ const notificationSchema = new mongoose_1.Schema({
     readBy: [mongoose_1.Schema.Types.ObjectId],
     hiddenFor: [mongoose_1.Schema.Types.ObjectId],
 });
-const Notification = (0, mongoose_1.model)('th-notifications', notificationSchema);
+const Notification = (0, mongoose_1.model)('th_notifications', notificationSchema);
 exports.default = Notification;
