@@ -36,6 +36,6 @@ const notificationSchema: Schema<INotification> = new Schema({
     hiddenFor: [Schema.Types.ObjectId],
 });
 
-const Notification = model<INotification>('th-notifications', notificationSchema);
+const Notification = model<INotification>('th_notifications', notificationSchema);
 
 export default Notification;
