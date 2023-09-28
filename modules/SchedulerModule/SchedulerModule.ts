@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { ToadScheduler, SimpleIntervalJob, Task } from 'toad-scheduler';
 import nodeScheduler from 'node-schedule';
 import axios from 'axios';
@@ -12,8 +13,12 @@ import cacheWatchlistVods from './tasks/cacheWatchlistVods';
 import backupReports from './tasks/backupReports';
 
 const checkIfEnabled = async (param: string) => {
-    const settings: ISettings[] = await Settings.find();
-    return { ...settings[0]._doc }[param]; // fix weird ts behavior
+    const settings: ISettings | null = await Settings.findOne();
+    if (!settings) {
+        console.log('[App]: You need to initialize app configuration first');
+        return false;
+    }
+    return { ...settings._doc }[param];
 };
 const scheduler = new ToadScheduler();
 
