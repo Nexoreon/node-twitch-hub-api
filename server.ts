@@ -11,10 +11,16 @@ dotenv.config({ path: './config.env' });
 import app from './app';
 import Settings from './models/settingsModel';
 import telegramBot from './utils/TelegramBot';
+import { initializeApp } from './utils/functions';
 
+let settings;
 // Connect to database
 mongoose.connect(process.env.DB_URL!)
-.then(() => console.log(chalk.green('[Датабаза]: Успешное соединение с датабазой!')))
+.then(async () => {
+    console.log(chalk.green('[Датабаза]: Успешное соединение с датабазой!'));
+    settings = await Settings.findOne();
+    initializeApp(settings);
+})
 .catch((err: unknown) => console.log('[Датабаза]: Ошибка соединения с датабазой!', err));
 
 // Start server
@@ -39,6 +45,7 @@ if (+process.env.PORT! === 9500) {
 
 // Shutdown server
 const shutdownServer = async (err: unknown) => {
+    // TODO: Use global settings variable
     const settings = await Settings.find();
     const { notifications } = settings[0];
 
