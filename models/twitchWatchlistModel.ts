@@ -20,6 +20,7 @@ export interface ITwitchWatchlist {
         isAvailable: boolean;
         isSuggestion: boolean;
         isShortTerm: boolean;
+        withNewGames: boolean;
         watchLater: boolean;
     };
     sortDate: Date;
@@ -78,6 +79,10 @@ const twitchWatchlistSchema: Schema<ITwitchWatchlist> = new Schema({
             default: false,
         },
         isShortTerm: Boolean,
+        withNewGames: {
+            type: Boolean,
+            default: false,
+        },
         watchLater: Boolean,
     },
     sortDate: {
