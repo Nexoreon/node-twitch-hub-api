@@ -148,7 +148,7 @@ const createVodSuggestion = async ({ streamId, userId, games, flags }) => {
         ...(!flags && suggestionExists && { relatedTo: suggestionExists._id }),
     })
         .catch((err) => {
-        if (err.code) {
+        if ('code' in err) {
             const isDuplicateError = err.code === 11000;
             console.log(isDuplicateError ? chalk_1.default.red('Такое видео уже было добавлено в список предложений ранее!') : console.log(err));
         }

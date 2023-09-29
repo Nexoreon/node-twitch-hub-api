@@ -48,7 +48,7 @@ const initializeApp = async (settings) => {
         await axios_1.default.post(`https://id.twitch.tv/oauth2/token?client_id=${process.env.TWITCH_CLIENT}&client_secret=${process.env.TWITCH_SECRET}&grant_type=client_credentials`)
             .then(async (resp) => {
             const { data } = resp;
-            await settingsModel_1.default.updateOne({}, { accessToken: data.access_token });
+            await settingsModel_1.default.updateOne({}, { accessToken: `Bearer ${data.access_token}` });
             console.log(chalk_1.default.green('[Server]: New server token successfully saved. Restart your application'));
             process.exit(1);
         })
