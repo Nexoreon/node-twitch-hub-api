@@ -6,7 +6,7 @@ import { sendError } from '../utils/functions';
 import { twitchHeaders, convertDuration } from '../apps/TwitchCommon';
 import TwitchWatchlist, { ITwitchWatchlist } from '../models/twitchWatchlistModel';
 import { IResponseVod } from '../types/types';
-import { IError } from './errorController';
+import { IMongoDBError, OperationError } from './errorController';
 
 // possible errors
 const sendError404 = sendError('Такого видео не существует!', 404);
@@ -187,7 +187,7 @@ export const addVideo = catchAsync(async (req, res, next) => {
                 };
             });
         })
-        .catch((err: IError) => {
+        .catch((err: OperationError) => {
             console.log(chalk.red('[Twitch Watchlist]: Ошибка получения видео!'), err);
             return next(sendError(`Ошибка получения видео: ${err.code}`, 500));
         });
@@ -203,7 +203,7 @@ export const addVideo = catchAsync(async (req, res, next) => {
             data: vod,
         });
     })
-    .catch((err: IError) => {
+    .catch((err: IMongoDBError) => {
         if (err.code && err.code === 11000) return next(sendErrorDuplicate);
         return next(sendError(`Ошибка добавления видео! ${err.message}`, 500));
     });
@@ -257,7 +257,7 @@ export const moveSuggestion = catchAsync(async (req, res, next) => {
             ...(!isLiveVod && { duration, thumbnail: vidInfo.thumbnail_url }),
         };
     })
-    .catch((err: IError) => {
+    .catch((err: OperationError) => {
         console.log(chalk.red('[Twitch Watchlist]: Ошибка получения информации о видео'), err);
         return next(sendErrorAddVideo);
     });

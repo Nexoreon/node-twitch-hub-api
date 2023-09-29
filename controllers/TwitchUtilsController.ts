@@ -10,7 +10,7 @@ import TwitchReportBackup from '../models/twitchReportBackupModel';
 import TwitchStreamer, { ITwitchStreamer } from '../models/twitchStreamerModel';
 import TwitchWatchlist, { ITwitchWatchlist } from '../models/twitchWatchlistModel';
 import { IResponseStreamer, IResponseVod } from '../types/types';
-import { IError } from './errorController';
+import { IMongoDBError, OperationError } from './errorController';
 
 // possible errors
 const sendError404Streamer = sendError('Такого стримера не найдено в датабазе!', 404);
@@ -87,7 +87,7 @@ export const importFollowList = catchAsync(async (req, res) => {
 
     preparedData.map(async (streamer) => {
         await TwitchStreamer.create(streamer)
-        .catch((err: IError) => console.log('Ошибка добавления стримера', err));
+        .catch((err: IMongoDBError) => console.log('Ошибка добавления стримера', err));
     });
 
     res.status(200).json({
@@ -150,7 +150,7 @@ export const getVodsData = catchAsync(async (req, res, next) => {
                             thumbnail: vod.thumbnail_url,
                         },
                     })
-                    .catch((err: IError) => console.log(chalk.red('[Twitch Watchlist]: Ошибка обновления информации о видео!'), err));
+                    .catch((err: IMongoDBError) => console.log(chalk.red('[Twitch Watchlist]: Ошибка обновления информации о видео!'), err));
                 }
             });
         })
@@ -160,7 +160,7 @@ export const getVodsData = catchAsync(async (req, res, next) => {
                 message: 'Данные обновлены для доступных видео',
             });
         })
-        .catch((err: IError) => {
+        .catch((err: OperationError) => {
             console.log(chalk.red('[Twitch Watchlist]: Невозможно получить данные для удаленных видео'), err);
             return next(sendErrorDataFetch);
         });

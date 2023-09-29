@@ -11,7 +11,7 @@ import TwitchStats from '../models/twitchStatsModel';
 import TwitchWatchlist from '../models/twitchWatchlistModel';
 import TwitchBan from '../models/twitchBanModel';
 import { INotifyMethod, IPushNotification, IResponseStreamer } from '../types/types';
-import { IError } from '../controllers/errorController';
+import { IMongoDBError } from '../controllers/errorController';
 
 export const twitchHeaders = {
     Authorization: process.env.TWITCH_TOKEN,
@@ -86,7 +86,7 @@ export const sendNotification = ({ title, message, link, icon, meta }: IPushNoti
             },
         })
         .then(() => console.log('[Pusher]: Уведомление успешно отправлено'))
-        .catch((err: IError) => console.log(chalk.red('[Pusher]: Ошибка отправки уведомления!'), err));
+        .catch((err: Error) => console.log(chalk.red('[Pusher]: Ошибка отправки уведомления!'), err));
     }
 
     if (method.telegram) {
@@ -165,8 +165,8 @@ export const createVodSuggestion = async ({ streamId, userId, games, flags }: IC
         },
         ...(!flags && suggestionExists && { relatedTo: suggestionExists._id }),
     })
-    .catch((err: IError) => {
-        if (err.code) {
+    .catch((err: IMongoDBError) => {
+        if ('code' in err) {
             const isDuplicateError = err.code === 11000;
             console.log(isDuplicateError ? chalk.red('Такое видео уже было добавлено в список предложений ранее!') : console.log(err));
         }

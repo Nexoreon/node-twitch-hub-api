@@ -8,11 +8,11 @@ import TwitchReport from '../models/twitchReportModel';
 import TwitchGamesApp from '../apps/TwitchGamesApp';
 import { IResponseGame } from '../types/types';
 import { sendError } from '../utils/functions';
-import { IError } from './errorController';
+import { OperationError } from './errorController';
 
 // possible errors
 const sendError404 = sendError('Такой игры не найдено в датабазе!', 404);
-const sendError500 = (err: IError) => sendError(`Ошибка выполнения запроса! ${err}`, 500);
+const sendError500 = (err: OperationError) => sendError(`Ошибка выполнения запроса! ${err}`, 500);
 
 export const addGame = catchAsync(async (req, res, next) => {
     await axios.get(`https://api.twitch.tv/helix/games?game_id=${req.body.gameId}`, {
@@ -38,7 +38,7 @@ export const addGame = catchAsync(async (req, res, next) => {
             data: newGame,
         });
     })
-    .catch((err: IError) => {
+    .catch((err: OperationError) => {
         console.log(chalk.red('[Twitch Games]: Ошибка получения игры!'), err);
         next(sendError500(err));
     });
@@ -132,5 +132,5 @@ export const checkGamesActivity = catchAsync(async (req, res, next) => {
             message: 'Проверка активности игр завершена',
         });
     })
-    .catch((err: IError) => next(sendError500(err)));
+    .catch((err: OperationError) => next(sendError500(err)));
 });

@@ -5,10 +5,10 @@ import TwitchReport, { ITwitchReport, ITwitchReportFollows } from '../models/twi
 import TwitchStreamer, { ITwitchStreamer } from '../models/twitchStreamerModel';
 import TwitchStats from '../models/twitchStatsModel';
 import TwitchStatsApp from '../apps/TwitchStatsApp';
-import { IError } from './errorController';
+import { OperationError } from './errorController';
 
 // possible errors
-const sendError500 = (err: IError) => sendError(`Ошибка выполнения запроса! ${err}`, 500);
+const sendError500 = (err: OperationError) => sendError(`Ошибка выполнения запроса! ${err}`, 500);
 
 export const getReports = catchAsync(async (req, res) => {
     const { limit, streamer, game } = req.query;
@@ -120,5 +120,5 @@ export const createDailyReport = catchAsync(async (req, res, next) => {
             message: 'Ежедневный отчёт успешно составлен',
         });
     })
-    .catch((err: IError) => next(sendError500(err)));
+    .catch((err: OperationError) => next(sendError500(err)));
 });

@@ -8,7 +8,7 @@ import TwitchStreamer, { ITwitchStreamer } from '../models/twitchStreamerModel';
 import TwitchStreamersApp from '../apps/TwitchStreamersApp';
 import { checkActiveGame } from '../apps/TwitchCommon';
 import { IResponseStreamer } from '../types/types';
-import { IError } from './errorController';
+import { OperationError } from './errorController';
 
 // possible errors
 const sendError404 = sendError('Такого стримера не найдено в датабазе!', 404);
@@ -150,7 +150,7 @@ export const checkStreamersActivity = catchAsync(async (req, res, next) => {
             message: 'Проверка активности успешно завершена!',
         });
     })
-    .catch((err: IError) => {
+    .catch((err: OperationError) => {
         console.log(chalk.red('[Twitch Streamers]: Ошибка проверки активности стримеров!'), err);
         next(sendError500);
     });
