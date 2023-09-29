@@ -45,7 +45,7 @@ export const initializeApp = async (settings: ISettings | null) => {
         )
         .then(async (resp: AxiosResponse) => {
             const { data }: { data: IResponseToken } = resp;
-            await Settings.updateOne({}, { accessToken: data.access_token });
+            await Settings.updateOne({}, { accessToken: `Bearer ${data.access_token}` });
             console.log(chalk.green('[Server]: New server token successfully saved. Restart your application'));
             process.exit(1);
         })
