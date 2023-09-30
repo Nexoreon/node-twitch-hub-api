@@ -60,7 +60,7 @@ export const initializeApp = async (settings: ISettings | null) => {
         const { accessToken } = settings;
         await axios.get('https://api.twitch.tv/helix/games/top', {
             headers: {
-                Authorization: process.env.TWITCH_TOKEN,
+                Authorization: accessToken,
                 'client-id': process.env.TWITCH_CLIENT,
             },
         })
