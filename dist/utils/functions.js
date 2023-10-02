@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.initializeApp = exports.sendNotificationLater = exports.createNotification = exports.sendError = exports.toObjectId = void 0;
+exports.initializeApp = exports.sendNotificationLater = exports.createNotification = exports.twitchHeaders = exports.sendError = exports.toObjectId = void 0;
 /* eslint-disable no-console */
 const axios_1 = __importDefault(require("axios"));
 const mongoose_1 = require("mongoose");
@@ -68,6 +68,10 @@ const initializeApp = async (settings) => {
         })
             .then(() => {
             console.log(chalk_1.default.green('[Server]: Successful connection to Twitch API'));
+            exports.twitchHeaders = {
+                Authorization: accessToken,
+                'client-id': process.env.TWITCH_CLIENT,
+            };
             process.env.TWITCH_TOKEN = accessToken;
         })
             .catch((err) => {

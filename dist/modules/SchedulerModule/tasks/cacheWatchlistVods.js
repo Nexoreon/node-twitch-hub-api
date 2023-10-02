@@ -7,6 +7,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const axios_1 = __importDefault(require("axios"));
 const chalk_1 = __importDefault(require("chalk"));
 const TwitchCommon_1 = require("../../../apps/TwitchCommon");
+const functions_1 = require("../../../utils/functions");
 const twitchWatchlistModel_1 = __importDefault(require("../../../models/twitchWatchlistModel"));
 exports.default = async () => {
     console.log(chalk_1.default.yellow('[Twitch Watchlist]: Запуск проверки и получения данных для ожидающих видео...'));
@@ -16,7 +17,7 @@ exports.default = async () => {
         console.log(chalk_1.default.yellow('[Twitch Watchlist]: Видео без данных отсутствуют'));
     if (ids.length) {
         await axios_1.default.get(`https://api.twitch.tv/helix/videos?${ids.join('&')}`, {
-            headers: TwitchCommon_1.twitchHeaders,
+            headers: functions_1.twitchHeaders,
         })
             .then(async (resp) => {
             const items = await resp.data.data;

@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.checkActiveGame = exports.createVodSuggestion = exports.sendNotification = exports.createStats = exports.checkBannedStreamers = exports.banStreamer = exports.updateGameHistory = exports.convertDuration = exports.twitchHeaders = void 0;
+exports.checkActiveGame = exports.createVodSuggestion = exports.sendNotification = exports.createStats = exports.checkBannedStreamers = exports.banStreamer = exports.updateGameHistory = exports.convertDuration = void 0;
 /* eslint-disable camelcase */
 /* eslint-disable no-console */
 const axios_1 = __importDefault(require("axios"));
@@ -15,10 +15,7 @@ const twitchGameModel_1 = __importDefault(require("../models/twitchGameModel"));
 const twitchStatsModel_1 = __importDefault(require("../models/twitchStatsModel"));
 const twitchWatchlistModel_1 = __importDefault(require("../models/twitchWatchlistModel"));
 const twitchBanModel_1 = __importDefault(require("../models/twitchBanModel"));
-exports.twitchHeaders = {
-    Authorization: process.env.TWITCH_TOKEN,
-    'client-id': process.env.TWITCH_CLIENT,
-};
+const functions_1 = require("../utils/functions");
 const convertDuration = (duration) => {
     const includesHours = duration.includes('h');
     const h = duration.split('h');
@@ -109,10 +106,10 @@ exports.sendNotification = sendNotification;
 const createVodSuggestion = async ({ streamId, userId, games, flags }) => {
     console.log('createVodSuggesion', userId, games, flags);
     const getVideo = await axios_1.default.get(`https://api.twitch.tv/helix/videos?user_id=${userId}`, {
-        headers: exports.twitchHeaders,
+        headers: functions_1.twitchHeaders,
     });
     const getFollowers = await axios_1.default.get(`https://api.twitch.tv/helix/channels/followers?broadcaster_id=${userId}`, {
-        headers: exports.twitchHeaders,
+        headers: functions_1.twitchHeaders,
     });
     const data = getVideo.data.data[0];
     const { id, title, user_name: author, created_at: streamDate, url } = data;
@@ -172,7 +169,7 @@ const checkActiveGame = async (id, removeJob, everyGame) => {
     if (!streamer)
         return console.log(chalk_1.default.red('[Twitch Streamers]: Такого стримера не найдено в системе! Отмена операции...'));
     const response = await axios_1.default.get(`https://api.twitch.tv/helix/streams?user_id=${id}`, {
-        headers: exports.twitchHeaders,
+        headers: functions_1.twitchHeaders,
     });
     const streamData = response.data.data[0];
     if (!streamData) {

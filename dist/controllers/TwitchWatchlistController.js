@@ -149,7 +149,7 @@ exports.addVideo = (0, catchAsync_1.default)(async (req, res, next) => {
     }
     else if (url.includes('twitch.tv')) {
         await axios_1.default.get(`https://api.twitch.tv/helix/videos?id=${videoId}`, {
-            headers: TwitchCommon_1.twitchHeaders,
+            headers: functions_1.twitchHeaders,
         })
             .then(async (resp) => {
             const vidInfo = resp.data.data[0];
@@ -164,7 +164,7 @@ exports.addVideo = (0, catchAsync_1.default)(async (req, res, next) => {
                 ...(!isLiveVod && { duration, thumbnail: vidInfo.thumbnail_url }),
             };
             await axios_1.default.get(`https://api.twitch.tv/helix/channels/followers?broadcaster_id=${vidInfo.user_id}`, {
-                headers: TwitchCommon_1.twitchHeaders,
+                headers: functions_1.twitchHeaders,
             })
                 .then((user) => {
                 req.body = {
@@ -230,7 +230,7 @@ exports.deleteVideo = (0, catchAsync_1.default)(async (req, res, next) => {
 exports.moveSuggestion = (0, catchAsync_1.default)(async (req, res, next) => {
     const { id, priority, watchLater, notes } = req.body;
     await axios_1.default.get(`https://api.twitch.tv/helix/videos?id=${id}`, {
-        headers: TwitchCommon_1.twitchHeaders,
+        headers: functions_1.twitchHeaders,
     })
         .then(async (resp) => {
         const vidInfo = resp.data.data[0];
@@ -260,7 +260,7 @@ exports.checkVideosAvailability = (0, catchAsync_1.default)(async (req, res) => 
     const currentIds = list.map((vid) => vid.id);
     const deletedVideos = [];
     await axios_1.default.get(`https://api.twitch.tv/helix/videos?id=${currentIds.join(',')}`, {
-        headers: TwitchCommon_1.twitchHeaders,
+        headers: functions_1.twitchHeaders,
     })
         .then((resp) => {
         let hasDeletedVideos = false;

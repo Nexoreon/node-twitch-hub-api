@@ -48,7 +48,7 @@ exports.importFollowList = (0, catchAsync_1.default)(async (req, res) => {
     const currentFollowList = await twitchStreamerModel_1.default.find();
     const currentFollowListIds = currentFollowList.map((s) => s.id);
     const getFollowList = await axios_1.default.get(`https://api.twitch.tv/helix/users/follows?first=100&from_id=${process.env.TWITCH_USER_ID}`, {
-        headers: TwitchCommon_1.twitchHeaders,
+        headers: functions_1.twitchHeaders,
     });
     const followList = getFollowList.data.data;
     // Check for new streamers
@@ -68,7 +68,7 @@ exports.importFollowList = (0, catchAsync_1.default)(async (req, res) => {
     if (!newIds.length)
         return res.status(200).json({ status: 'ok', message: 'Новых отслеживаемых стримеров не обнаружено!' });
     const getStreamersData = await axios_1.default.get(`https://api.twitch.tv/helix/users?${newIds.join('&')}`, {
-        headers: TwitchCommon_1.twitchHeaders,
+        headers: functions_1.twitchHeaders,
     });
     const streamersData = getStreamersData.data.data;
     const preparedData = [];
@@ -92,7 +92,7 @@ exports.importFollowList = (0, catchAsync_1.default)(async (req, res) => {
 exports.searchGame = (0, catchAsync_1.default)(async (req, res) => {
     const { gameName } = req.query;
     const response = await axios_1.default.get(`https://api.twitch.tv/helix/search/categories?query=${gameName}`, {
-        headers: TwitchCommon_1.twitchHeaders,
+        headers: functions_1.twitchHeaders,
     });
     res.status(200).json({
         status: 'ok',
@@ -102,7 +102,7 @@ exports.searchGame = (0, catchAsync_1.default)(async (req, res) => {
 exports.searchStreamer = (0, catchAsync_1.default)(async (req, res) => {
     const { search } = req.query;
     const response = await await axios_1.default.get(`https://api.twitch.tv/helix/search/channels?query=${search}`, {
-        headers: TwitchCommon_1.twitchHeaders,
+        headers: functions_1.twitchHeaders,
     });
     res.status(200).json({
         status: 'ok',
@@ -123,7 +123,7 @@ exports.getVodsData = (0, catchAsync_1.default)(async (req, res, next) => {
         res.status(400).json({ status: 'fail', message: 'Видео без данных отсутствуют' });
     if (ids.length) {
         await axios_1.default.get(`https://api.twitch.tv/helix/videos?${ids.join('&')}`, {
-            headers: TwitchCommon_1.twitchHeaders,
+            headers: functions_1.twitchHeaders,
         })
             .then(async (resp) => {
             const items = await resp.data.data;
