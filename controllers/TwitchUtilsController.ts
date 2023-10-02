@@ -2,8 +2,8 @@
 import axios from 'axios';
 import chalk from 'chalk';
 import catchAsync from '../utils/catchAsync';
-import { sendError } from '../utils/functions';
-import { twitchHeaders, convertDuration } from '../apps/TwitchCommon';
+import { sendError, twitchHeaders } from '../utils/functions';
+import { convertDuration } from '../apps/TwitchCommon';
 import Settings from '../models/settingsModel';
 import TwitchReport from '../models/twitchReportModel';
 import TwitchReportBackup from '../models/twitchReportBackupModel';

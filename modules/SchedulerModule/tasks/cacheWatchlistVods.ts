@@ -1,7 +1,8 @@
 /* eslint-disable no-console */
 import axios from 'axios';
 import chalk from 'chalk';
-import { twitchHeaders, convertDuration } from '../../../apps/TwitchCommon';
+import { convertDuration } from '../../../apps/TwitchCommon';
+import { twitchHeaders } from '../../../utils/functions';
 import { IResponseVod } from '../../../types/types';
 import TwitchWatchlist, { ITwitchWatchlist } from '../../../models/twitchWatchlistModel';
 

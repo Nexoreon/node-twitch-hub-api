@@ -2,8 +2,8 @@
 import axios from 'axios';
 import chalk from 'chalk';
 import catchAsync from '../utils/catchAsync';
-import { sendError } from '../utils/functions';
-import { twitchHeaders, convertDuration } from '../apps/TwitchCommon';
+import { sendError, twitchHeaders } from '../utils/functions';
+import { convertDuration } from '../apps/TwitchCommon';
 import TwitchWatchlist, { ITwitchWatchlist } from '../models/twitchWatchlistModel';
 import { IResponseVod } from '../types/types';
 import { IMongoDBError, OperationError } from './errorController';

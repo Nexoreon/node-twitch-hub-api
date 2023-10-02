@@ -10,13 +10,9 @@ import TwitchGame from '../models/twitchGameModel';
 import TwitchStats from '../models/twitchStatsModel';
 import TwitchWatchlist from '../models/twitchWatchlistModel';
 import TwitchBan from '../models/twitchBanModel';
+import { twitchHeaders } from '../utils/functions';
 import { INotifyMethod, IPushNotification, IResponseStreamer } from '../types/types';
 import { IMongoDBError } from '../controllers/errorController';
-
-export const twitchHeaders = {
-    Authorization: process.env.TWITCH_TOKEN,
-    'client-id': process.env.TWITCH_CLIENT,
-};
 
 export const convertDuration = (duration: string) => {
     const includesHours = duration.includes('h');

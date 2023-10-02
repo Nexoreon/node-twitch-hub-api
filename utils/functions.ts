@@ -11,6 +11,8 @@ import { IResponseToken } from '../types/types';
 
 export const toObjectId = (id: string) => new Types.ObjectId(id);
 export const sendError = (msg: string, statusCode: number) => new AppError(msg, statusCode);
+// eslint-disable-next-line import/no-mutable-exports
+export let twitchHeaders: { Authorization: string, 'client-id': string};
 
 // Create App Notification
 export const createNotification = async (ntfData: object) => {
@@ -66,6 +68,10 @@ export const initializeApp = async (settings: ISettings | null) => {
         })
         .then(() => {
             console.log(chalk.green('[Server]: Successful connection to Twitch API'));
+            twitchHeaders = {
+                Authorization: accessToken,
+                'client-id': process.env.TWITCH_CLIENT!,
+            };
             process.env.TWITCH_TOKEN = accessToken;
         })
         .catch((err: AxiosError) => {
