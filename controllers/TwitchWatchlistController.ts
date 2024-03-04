@@ -278,7 +278,7 @@ export const checkVideosAvailability = catchAsync(async (req, res) => {
     const currentIds = list.map((vid: ITwitchWatchlist) => vid.id);
     const deletedVideos: string[] = [];
 
-    await axios.get(`https://api.twitch.tv/helix/videos?id=${currentIds.join(',')}`, {
+    await axios.get(`https://api.twitch.tv/helix/videos?id=${currentIds.join('&id=')}`, {
         headers: twitchHeaders,
     })
     .then((resp) => {
@@ -304,5 +304,7 @@ export const checkVideosAvailability = catchAsync(async (req, res) => {
                 message,
             },
         });
+    }).catch((err) => {
+        console.log(chalk.red('[Twitch Watchlist]: Error! Unable to check videos availability!'), err);
     });
 });
