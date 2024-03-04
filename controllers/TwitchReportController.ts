@@ -101,7 +101,7 @@ export const getReports = catchAsync(async (req, res) => {
     let items = [...reports];
     if (!game && !streamer) items = [today, ...reports];
 
-    const total = await TwitchReport.count(match);
+    const total = await TwitchReport.countDocuments(match);
 
     res.status(200).json({
         status: 'success',

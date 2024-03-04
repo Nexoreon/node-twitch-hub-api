@@ -19,7 +19,7 @@ const sendErrorSettingsNotInit = sendError('Настройки приложен�
 
 export const checkReports = catchAsync(async (req, res) => {
     let hasAnomaly: boolean = false;
-    const reports = await TwitchReport.count();
+    const reports = await TwitchReport.countDocuments();
     const latestReport = await TwitchReport.findOne().sort({ timestamp: -1 }).select({ timestamp: 1 });
     if (reports < 10) hasAnomaly = true;
 
