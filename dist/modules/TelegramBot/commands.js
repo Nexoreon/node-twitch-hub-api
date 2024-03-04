@@ -92,19 +92,20 @@ const handleGetReport = async (chatId) => {
     const highlights = [];
     report.highlights.map((h) => {
         // eslint-disable-next-line max-len
-        highlights.push(`- <strong><a href="https://twitch.tv/${h.userName}">${h.userName}</a></strong> играл в <strong><a href="https://twitch.tv/directory/game/${h.gameName}">${h.gameName}</a></strong> с ${h.viewers} зрителей`);
+        highlights.push(`• <strong><a href="https://twitch.tv/${h.userName}">${h.userName}</a></strong> играл в <strong><a href="https://twitch.tv/directory/game/${h.gameName}">${h.gameName}</a></strong> с ${h.viewers} зрителей`);
     });
     const follows = [];
     report.follows.map((f) => {
         // eslint-disable-next-line max-len
-        follows.push(`<strong><a href="https://twitch.tv/${f.userName}">${f.userName}</a></strong>\n- ${f.games.map((game) => `${game.name}${game.firstTime ? ' 🆕' : ''}`).join('\n- ')}`);
+        follows.push(`<strong><a href="https://twitch.tv/${f.userName}">${f.userName}</a></strong>\n• ${f.games.map((game) => `${game.name}${game.firstTime ? ' 🆕' : ''}${game.name === 'Games + Demos' ? ' 🟨' : ''}`).join('\n• ')}`);
     });
-    TelegramBot_1.default.sendMessage(chatId, `Отчёт за ${new Date(report.timestamp).toLocaleDateString()}`);
-    TelegramBot_1.default.sendMessage(chatId, `<strong>Выделенное</strong>\n\n${highlights.join('\n')}`, {
-        parse_mode: 'HTML',
-        disable_web_page_preview: true,
-    });
-    TelegramBot_1.default.sendMessage(chatId, `<strong>Отслеживаемые стримеры</strong>\n\n${follows.join('\n\n')}`, {
+    TelegramBot_1.default.sendMessage(chatId, `
+Отчёт за ${new Date(report.timestamp).toLocaleDateString()}
+
+<strong>Выделенное</strong>\n\n${highlights.length ? highlights.join('\n') : 'Отсутствует'}
+
+<strong>Отслеживаемые стримеры</strong>\n\n${follows.join('\n\n')}
+    `, {
         parse_mode: 'HTML',
         disable_web_page_preview: true,
     });

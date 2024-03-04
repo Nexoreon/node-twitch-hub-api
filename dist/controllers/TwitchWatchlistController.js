@@ -259,7 +259,7 @@ exports.checkVideosAvailability = (0, catchAsync_1.default)(async (req, res) => 
     const list = await twitchWatchlistModel_1.default.find({ platform: 'Twitch', 'flags.isAvailable': { $ne: false } });
     const currentIds = list.map((vid) => vid.id);
     const deletedVideos = [];
-    await axios_1.default.get(`https://api.twitch.tv/helix/videos?id=${currentIds.join(',')}`, {
+    await axios_1.default.get(`https://api.twitch.tv/helix/videos?id=${currentIds.join('&id=')}`, {
         headers: functions_1.twitchHeaders,
     })
         .then((resp) => {
@@ -283,5 +283,7 @@ exports.checkVideosAvailability = (0, catchAsync_1.default)(async (req, res) => 
                 message,
             },
         });
+    }).catch((err) => {
+        console.log(chalk_1.default.red('[Twitch Watchlist]: Error! Unable to check videos availability!'), err);
     });
 });

@@ -21,7 +21,7 @@ const sendErrorDataFetch = (0, functions_1.sendError)('Ошибка получе
 const sendErrorSettingsNotInit = (0, functions_1.sendError)('Настройки приложения не инициализированы!', 403);
 exports.checkReports = (0, catchAsync_1.default)(async (req, res) => {
     let hasAnomaly = false;
-    const reports = await twitchReportModel_1.default.count();
+    const reports = await twitchReportModel_1.default.countDocuments();
     const latestReport = await twitchReportModel_1.default.findOne().sort({ timestamp: -1 }).select({ timestamp: 1 });
     if (reports < 10)
         hasAnomaly = true;

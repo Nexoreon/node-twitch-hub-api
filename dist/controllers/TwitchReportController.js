@@ -102,7 +102,7 @@ exports.getReports = (0, catchAsync_1.default)(async (req, res) => {
     let items = [...reports];
     if (!game && !streamer)
         items = [today, ...reports];
-    const total = await twitchReportModel_1.default.count(match);
+    const total = await twitchReportModel_1.default.countDocuments(match);
     res.status(200).json({
         status: 'success',
         data: {

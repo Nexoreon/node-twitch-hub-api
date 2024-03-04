@@ -10,7 +10,7 @@ const twitchReportBackupModel_1 = __importDefault(require("../../../models/twitc
 exports.default = async () => {
     console.log(chalk_1.default.yellow('[Twitch Reports]: Запуск создания бэкапа отчётов...'));
     let hasAnomaly = false;
-    const reportsCount = await twitchReportModel_1.default.count();
+    const reportsCount = await twitchReportModel_1.default.countDocuments();
     if (reportsCount < 10)
         hasAnomaly = true;
     if (!hasAnomaly) {
