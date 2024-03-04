@@ -108,21 +108,22 @@ export const handleGetReport = async (chatId: number) => {
     const highlights: string[] = [];
     report.highlights.map((h: ITwitchReportHighlights) => {
         // eslint-disable-next-line max-len
-        highlights.push(`- <strong><a href="https://twitch.tv/${h.userName}">${h.userName}</a></strong> играл в <strong><a href="https://twitch.tv/directory/game/${h.gameName}">${h.gameName}</a></strong> с ${h.viewers} зрителей`);
+        highlights.push(`• <strong><a href="https://twitch.tv/${h.userName}">${h.userName}</a></strong> играл в <strong><a href="https://twitch.tv/directory/game/${h.gameName}">${h.gameName}</a></strong> с ${h.viewers} зрителей`);
     });
 
     const follows: string[] = [];
     report.follows.map((f: ITwitchReportFollows) => {
         // eslint-disable-next-line max-len
-        follows.push(`<strong><a href="https://twitch.tv/${f.userName}">${f.userName}</a></strong>\n- ${f.games.map((game: { name: string, firstTime: boolean }) => `${game.name}${game.firstTime ? ' 🆕' : ''}`).join('\n- ')}`);
+        follows.push(`<strong><a href="https://twitch.tv/${f.userName}">${f.userName}</a></strong>\n• ${f.games.map((game: { name: string, firstTime: boolean }) => `${game.name}${game.firstTime ? ' 🆕' : ''}${game.name === 'Games + Demos' ? ' 🟨' : ''}`).join('\n• ')}`);
     });
 
-    bot.sendMessage(chatId, `Отчёт за ${new Date(report.timestamp).toLocaleDateString()}`);
-    bot.sendMessage(chatId, `<strong>Выделенное</strong>\n\n${highlights.join('\n')}`, {
-        parse_mode: 'HTML',
-        disable_web_page_preview: true,
-    });
-    bot.sendMessage(chatId, `<strong>Отслеживаемые стримеры</strong>\n\n${follows.join('\n\n')}`, {
+    bot.sendMessage(chatId, `
+Отчёт за ${new Date(report.timestamp).toLocaleDateString()}
+
+<strong>Выделенное</strong>\n\n${highlights.length ? highlights.join('\n') : 'Отсутствует'}
+
+<strong>Отслеживаемые стримеры</strong>\n\n${follows.join('\n\n')}
+    `, {
         parse_mode: 'HTML',
         disable_web_page_preview: true,
     });
