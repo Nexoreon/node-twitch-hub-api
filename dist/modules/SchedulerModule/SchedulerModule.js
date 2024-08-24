@@ -55,7 +55,7 @@ scheduler.addSimpleIntervalJob(checkWatchlist);
 // RENDER ONLY
 if (+process.env.PORT * 1 !== 9500) {
     const wakeRender = new toad_scheduler_1.SimpleIntervalJob({ minutes: +process.env.APP_RECONNECT_TIMER }, new toad_scheduler_1.Task('wakeRender', async () => {
-        await axios_1.default.get('https://node-twitch-favorites.onrender.com/');
+        await axios_1.default.get('https://node-twitch-hub-api.onrender.com');
     }));
     scheduler.addSimpleIntervalJob(wakeRender);
 }
