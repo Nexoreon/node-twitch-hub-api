@@ -17,15 +17,15 @@ let settings;
 // Connect to database
 mongoose.connect(process.env.DB_URL!)
 .then(async () => {
-    console.log(chalk.green('[Датабаза]: Успешное соединение с датабазой!'));
+    console.log(chalk.green('[DB]: Successful Connection!'));
     settings = await Settings.findOne();
     initializeApp(settings);
 })
-.catch((err: unknown) => console.log('[Датабаза]: Ошибка соединения с датабазой!', err));
+.catch((err: unknown) => console.log('[DB]: Failed to Connect!', err));
 
 // Start server
 let server: http.Server | https.Server;
-const successMsg = chalk.green(`[Сервер]: Успешный запуск. Сервер прослушивается на порту: ${process.env.PORT}`);
+const successMsg = chalk.green(`[Server]: Successful Launch. Server is listening on port: ${process.env.PORT}`);
 
 if (+process.env.PORT! === 9500) {
     const options = {
