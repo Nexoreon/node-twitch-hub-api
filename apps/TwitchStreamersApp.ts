@@ -26,6 +26,13 @@ const addToStreamHistory = async (streamId: string, userId: string, userName: st
         const games = playedGames[0].data;
         firstTime = !games.includes(gameName); // check if streamer already played that game before
         if (notify && firstTime) {
+            createNotification({
+                sendOut: Date.now(),
+                receivers: [process.env.USER_ID],
+                title: 'Новая игра',
+                content: `${userName} впервые играет в ${gameName}`,
+                link: `https://twitch.tv/${userName}`,
+            });
             sendNotification({
                 message: `${userName} впервые играет в ${gameName}`,
             }, { telegram: true });
