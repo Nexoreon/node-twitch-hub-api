@@ -277,34 +277,56 @@ export const checkVideosAvailability = catchAsync(async (req, res) => {
     const list = await TwitchWatchlist.find({ platform: 'Twitch', 'flags.isAvailable': { $ne: false } });
     const currentIds = list.map((vid: ITwitchWatchlist) => vid.id);
     const deletedVideos: string[] = [];
+    const idParts: string[][] = [];
+    let message: string = '';
 
-    await axios.get(`https://api.twitch.tv/helix/videos?id=${currentIds.join('&id=')}`, {
-        headers: twitchHeaders,
-    })
-    .then((resp) => {
-        let hasDeletedVideos = false;
-        const existingIds = resp.data.data.map((vid: IResponseVod) => vid.id);
-        currentIds.map(async (id: string) => {
-            const video = list.filter((vid: ITwitchWatchlist) => vid.id === id)[0];
-            const videoNotAvailable = !existingIds.includes(id);
-            if (videoNotAvailable) {
-                hasDeletedVideos = true;
-                deletedVideos.push(`${video.games[0]} от ${video.author}`);
-                await TwitchWatchlist.findOneAndUpdate({ id }, { $set: { 'flags.isAvailable': false } });
-            }
-        });
+    const handleTwitchRequest = async (ids: string[]) => {
+        try {
+            console.log(`Received request with amount of ${ids.length} videos`);
+            const resp = await axios.get(`https://api.twitch.tv/helix/videos?id=${ids.join('&id=')}`, {
+                headers: twitchHeaders,
+            });
 
-        const message = hasDeletedVideos
+            const existingIds = resp.data.data.map((vid: IResponseVod) => vid.id);
+            console.log(`Videos alive amount: ${resp.data.data.length}`);
+
+            const updatePromises = ids.map(async (id: string) => {
+                const video = list.find((vid: ITwitchWatchlist) => vid.id === id);
+                const videoNotAvailable = !existingIds.includes(id);
+                if (videoNotAvailable && video) {
+                    deletedVideos.push(`\n ${video.games[0]} от ${video.author} \n`);
+                    await TwitchWatchlist.findOneAndUpdate({ id }, { $set: { 'flags.isAvailable': false } });
+                }
+            });
+
+            await Promise.all(updatePromises);
+        } catch (err: any) {
+            console.log(chalk.red('[Twitch Watchlist]: Error! Unable to check videos availability!'), err);
+            message = `Во время проверки произошла ошибка: ${err.message}`;
+        }
+    };
+
+    if (currentIds.length > 100) { // check twitch request limit
+        for (let i = 0; i < currentIds.length; i += 100) {
+            idParts.push(currentIds.slice(i, i + 100));
+        }
+        await Promise.all(idParts.map((part) => handleTwitchRequest(part)));
+    } else {
+        await handleTwitchRequest(currentIds);
+    }
+
+    console.log(`Deleted videos amount: ${deletedVideos.length}`);
+
+    if (!message) {
+        message = deletedVideos.length
             ? `Следующие видео больше недоступны так как были удалены с платформы: ${deletedVideos.join(', ')}`
             : 'Все актуальные видео доступны для просмотра';
+    }
 
-        res.status(200).json({
-            status: 'ok',
-            data: {
-                message,
-            },
-        });
-    }).catch((err) => {
-        console.log(chalk.red('[Twitch Watchlist]: Error! Unable to check videos availability!'), err);
+    res.status(200).json({
+        status: 'ok',
+        data: {
+            message,
+        },
     });
 });
