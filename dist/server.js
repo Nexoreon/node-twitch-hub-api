@@ -20,14 +20,14 @@ let settings;
 // Connect to database
 mongoose_1.default.connect(process.env.DB_URL)
     .then(async () => {
-    console.log(chalk_1.default.green('[Датабаза]: Успешное соединение с датабазой!'));
+    console.log(chalk_1.default.green('[DB]: Successful Connection!'));
     settings = await settingsModel_1.default.findOne();
     (0, functions_1.initializeApp)(settings);
 })
-    .catch((err) => console.log('[Датабаза]: Ошибка соединения с датабазой!', err));
+    .catch((err) => console.log('[DB]: Failed to Connect!', err));
 // Start server
 let server;
-const successMsg = chalk_1.default.green(`[Сервер]: Успешный запуск. Сервер прослушивается на порту: ${process.env.PORT}`);
+const successMsg = chalk_1.default.green(`[Server]: Successful Launch. Server is listening on port: ${process.env.PORT}`);
 if (+process.env.PORT === 9500) {
     const options = {
         key: fs_1.default.readFileSync('./keys/192.168.0.100-key.pem'),

@@ -19,7 +19,7 @@ app.use((0, morgan_1.default)('dev'));
 app.use((0, cors_1.default)());
 app.use('/', systemRoutes_1.default);
 app.use('/api/v1/twitch', twitchRoutes_1.default);
-app.all('*', (req, res, next) => {
+app.use((req, res, next) => {
     next(new appError_1.default(`Unable to find ${req.originalUrl} on the server`, 404));
 });
 app.use(errorController_1.default);

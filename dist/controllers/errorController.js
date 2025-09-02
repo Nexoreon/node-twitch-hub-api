@@ -47,7 +47,7 @@ const handleExpiredToken = (err) => {
 };
 const handleJWTError = () => new appError_1.default('Невалидный токен. Пожалуйста переавторизируйтесь!', 401);
 const handleJWTExpiredError = () => new appError_1.default('Ваш токен авторизации истёк! Пожалуйста переавторизируйтесь!', 401);
-exports.default = (err, req, res, next) => {
+const globalErrorHandler = (err, req, res, next) => {
     err.statusCode = err.statusCode || 500;
     err.status = err.status || 'error';
     if (err.name === 'CastError')
@@ -62,7 +62,8 @@ exports.default = (err, req, res, next) => {
         err = handleJWTExpiredError();
     // if (err.response.status === 404) err = handleExpiredToken(err);
     if (process.env.NODE_ENV === 'development')
-        return sendDevErrors(err, res);
+        sendDevErrors(err, res);
     if (process.env.NODE_ENV === 'production')
-        return sendProdErrors(err, res);
+        sendProdErrors(err, res);
 };
+exports.default = globalErrorHandler;

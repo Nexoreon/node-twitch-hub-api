@@ -65,8 +65,10 @@ exports.importFollowList = (0, catchAsync_1.default)(async (req, res) => {
             await twitchStreamerModel_1.default.findOneAndDelete({ id });
     });
     // Add new streamers
-    if (!newIds.length)
-        return res.status(200).json({ status: 'ok', message: 'Новых отслеживаемых стримеров не обнаружено!' });
+    if (!newIds.length) {
+        res.status(200).json({ status: 'ok', message: 'Новых отслеживаемых стримеров не обнаружено!' });
+        return;
+    }
     const getStreamersData = await axios_1.default.get(`https://api.twitch.tv/helix/users?${newIds.join('&')}`, {
         headers: functions_1.twitchHeaders,
     });
@@ -172,19 +174,21 @@ exports.setNotificationParam = (0, catchAsync_1.default)(async (req, res, next) 
     const { param, enabled, enabledForAll } = req.body;
     if (enabledForAll !== undefined) {
         await twitchStreamerModel_1.default.updateMany({}, { $set: { 'flags.notifyOnNewGame': enabledForAll } });
-        return res.status(200).json({
+        res.status(200).json({
             status: 'ok',
             message: 'Статус уведомлений для всех стримеров изменён!',
         });
+        return;
     }
     if (param.length !== 8) {
         const updateParam = await settingsModel_1.default.findOneAndUpdate({}, { $set: { [`notifications.${param}`]: enabled } });
         if (!updateParam)
             return next(sendErrorSettingsNotInit);
-        return res.status(200).json({
+        res.status(200).json({
             status: 'ok',
             message: 'Статус уведомления для этого параметра изменён',
         });
+        return;
     }
     const streamer = await twitchStreamerModel_1.default.findOneAndUpdate({ id: param }, { $set: { 'flags.notifyOnNewGame': enabled } });
     if (!streamer)
