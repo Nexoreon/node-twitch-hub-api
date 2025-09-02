@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 
-import { NextFunction, Request, Response } from 'express';
+import { ErrorRequestHandler, NextFunction, Request, Response } from 'express';
 import { AxiosError } from 'axios';
 import AppError from '../utils/appError';
 
@@ -59,13 +59,13 @@ const handleValidationErrorDB = (err: IMongoDBError) => {
 
 // TODO: Handle token related error
 const handleExpiredToken = (err: AxiosError) => {
-    console.log(err)
+    console.log(err);
     return new AppError('Twitch token expired. Restart your application to get new one!', 401);
 };
 const handleJWTError = () => new AppError('Невалидный токен. Пожалуйста переавторизируйтесь!', 401);
 const handleJWTExpiredError = () => new AppError('Ваш токен авторизации истёк! Пожалуйста переавторизируйтесь!', 401);
 
-export default (err: any, req: Request, res: Response, next: NextFunction) => {
+const globalErrorHandler: ErrorRequestHandler = (err: any, req: Request, res: Response, next: NextFunction) => {
     err.statusCode = err.statusCode || 500;
     err.status = err.status || 'error';
 
@@ -76,6 +76,8 @@ export default (err: any, req: Request, res: Response, next: NextFunction) => {
     if (err.name === 'TokenExpiredError') err = handleJWTExpiredError();
     // if (err.response.status === 404) err = handleExpiredToken(err);
 
-    if (process.env.NODE_ENV === 'development') return sendDevErrors(err, res);
-    if (process.env.NODE_ENV === 'production') return sendProdErrors(err, res);
+    if (process.env.NODE_ENV === 'development') sendDevErrors(err, res);
+    if (process.env.NODE_ENV === 'production') sendProdErrors(err, res);
 };
+
+export default globalErrorHandler;
