@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { getSettings, createSettings, updateSettings } from '../controllers/settingsController';
 import { getNotifications } from '../controllers/notificationController';
 import { sendStatus } from '../controllers/appController';
+import { testFunction } from '../controllers/TwitchUtilsController';
 
 const router = Router();
 
@@ -13,5 +14,7 @@ router.route('/api/v1/settings')
 .patch(updateSettings);
 
 router.get('/api/v1/notifications', getNotifications);
+
+router.post('/api/v1/twitch/utils/testFunction', testFunction);
 
 export default router;

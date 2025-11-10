@@ -3,7 +3,7 @@ import morgan from 'morgan';
 import cors from 'cors';
 import './modules/SchedulerModule/SchedulerModule';
 import './modules/TelegramBot/TelegramBotModule';
-import './modules/testModule';
+// import './modules/testModule';
 
 import AppError from './utils/appError';
 import globalErrorHandle from './controllers/errorController';
