@@ -7,12 +7,13 @@ import { convertDuration } from '../apps/TwitchCommon';
 import TwitchWatchlist, { ITwitchWatchlist } from '../models/twitchWatchlistModel';
 import { IResponseVod } from '../types/types';
 import { IMongoDBError, OperationError } from './errorController';
+import TwitchStreamer from '../models/twitchStreamerModel';
 
 // possible errors
 const sendError404 = sendError('Такого видео не существует!', 404);
 const sendErrorParamRelated = sendError('Не указан ID родительского видео!', 400);
 const sendErrorAddVideo = sendError('Ошибка добавления видео!', 500);
-const sendErrorPlatform = sendError('Неопознанная платформа. Поддерживается только Twitch и YouTube', 400);
+const sendErrorPlatform = sendError('Неопознанная платформа. Поддерживается только Twitch', 400);
 const sendErrorDuplicate = sendError('Такое видео уже было добавлено ранее!', 409);
 
 const suggestionsQuery = { 'flags.isSuggestion': true, relatedTo: { $exists: false } };
@@ -76,9 +77,13 @@ export const getVideos = catchAsync(async (req, res) => {
 });
 
 export const getSuggestions = catchAsync(async (req, res) => {
-    const { limit } = req.query;
+    const { limit, game, streamer } = req.query;
     const suggestions = await TwitchWatchlist.aggregate([
-        { $match: suggestionsQuery },
+        { $match: {
+            ...suggestionsQuery,
+            ...(game && { games: { $in: [game] } }),
+            ...(streamer && { author: streamer }),
+        } },
         { $lookup: {
             from: 'ma_twitch-watchlists',
             localField: '_id',
@@ -129,34 +134,10 @@ export const getVideo = catchAsync(async (req, res, next) => {
 
 export const addVideo = catchAsync(async (req, res, next) => {
     const { url } = req.body;
-    let splitedUrl: string = url.split('/');
-    let videoId: string = splitedUrl[splitedUrl.length - 1];
+    const splitedUrl: string = url.split('/');
+    const videoId: string = splitedUrl[splitedUrl.length - 1];
 
-    if (url.includes('youtube')) {
-        splitedUrl = url.split('=');
-        // eslint-disable-next-line prefer-destructuring
-        videoId = splitedUrl[1];
-        await axios.get(`https://www.googleapis.com/youtube/v3/videos?key=${process.env.YOUTUBE_API_KEY}&id=${videoId}&part=snippet,contentDetails`)
-        .then(async (resp) => {
-            const video = resp.data.items[0];
-            const vidInfo = video.snippet;
-            const duration = video.contentDetails.duration.replace('PT', '').replace('H', ':').replace('M', ':').replace('S', '');
-
-            req.body = {
-                ...req.body,
-                id: videoId,
-                platform: 'YouTube',
-                title: vidInfo.title,
-                author: vidInfo.channelTitle,
-                thumbnail: vidInfo.thumbnails.medium.url,
-                meta: {
-                    streamDate: Date.now(),
-                    followers: 0,
-                },
-                duration,
-            };
-        });
-    } else if (url.includes('twitch.tv')) {
+    if (url.includes('twitch.tv')) {
         await axios.get(`https://api.twitch.tv/helix/videos?id=${videoId}`, { // get video info
             headers: twitchHeaders,
         })
@@ -168,7 +149,6 @@ export const addVideo = catchAsync(async (req, res, next) => {
             req.body = {
                 ...req.body,
                 id: videoId,
-                platform: 'Twitch',
                 title: vidInfo.title,
                 author: vidInfo.user_name,
                 ...(!isLiveVod && { duration, thumbnail: vidInfo.thumbnail_url }),
@@ -242,7 +222,7 @@ export const deleteVideo = catchAsync(async (req, res, next) => {
 });
 
 export const moveSuggestion = catchAsync(async (req, res, next) => {
-    const { id, priority, watchLater, notes } = req.body;
+    const { id, priority, watchLater } = req.body;
     await axios.get(`https://api.twitch.tv/helix/videos?id=${id}`, { // get video info
         headers: twitchHeaders,
     })
@@ -253,7 +233,6 @@ export const moveSuggestion = catchAsync(async (req, res, next) => {
 
         req.body = {
             priority,
-            notes,
             ...(!isLiveVod && { duration, thumbnail: vidInfo.thumbnail_url }),
         };
     })
@@ -274,7 +253,7 @@ export const moveSuggestion = catchAsync(async (req, res, next) => {
 });
 
 export const checkVideosAvailability = catchAsync(async (req, res) => {
-    const list = await TwitchWatchlist.find({ platform: 'Twitch', 'flags.isAvailable': { $ne: false } });
+    const list = await TwitchWatchlist.find({ 'flags.isAvailable': { $ne: false } });
     const currentIds = list.map((vid: ITwitchWatchlist) => vid.id);
     const deletedVideos: string[] = [];
     const idParts: string[][] = [];
