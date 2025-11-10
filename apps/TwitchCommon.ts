@@ -27,6 +27,36 @@ export const convertDuration = (duration: string) => {
     return `${includesHours ? `${hours}:` : ''}${minutes}:${seconds}`;
 };
 
+// Get game cover for games and vods
+export const getGameCover = async (game: string) => {
+    interface IGameIGDB {
+        id: string;
+        cover: {
+            id: string;
+            url: string;
+        },
+        name: string,
+    }
+
+    try {
+        const response = await axios.post<IGameIGDB[]>('https://api.igdb.com/v4/games', `fields name, cover.url; search "${game.toLowerCase()}";`, {
+            headers: {
+                'Client-ID': process.env.TWITCH_CLIENT!,
+                Authorization: process.env.TWITCH_TOKEN!,
+            },
+        });
+
+        const match = response.data.find(({ name }) => name.toLocaleLowerCase() === game.toLowerCase());
+        if (!match || !match.cover?.url) return null;
+
+        const parts = match.cover.url.split('/');
+        const coverId = parts[parts.length - 1];
+        return coverId;
+    } catch (e) {
+        console.log(chalk.red('[getGameCover]: Ошибка получения изображения для игры!'), e);
+    }
+};
+
 export const updateGameHistory = async ({ stream, isFavorite }: { stream: IResponseStreamer, isFavorite: boolean }) => {
     await TwitchGame.findOneAndUpdate({ id: stream.game_id }, { // add mark about this event to the game doc
         $push: {
@@ -108,15 +138,23 @@ interface ICreateVodProps {
     };
 }
 
-export const createVodSuggestion = async ({ streamId, userId, games, flags }: ICreateVodProps) => {
-    console.log('createVodSuggesion', userId, games, flags)
+export const createVodSuggestion = async ({ userId, games, flags }: ICreateVodProps) => {
+    console.log(chalk.yellow('[Vod Suggestion]: Creating new suggestion...'), `Streamer: ${userId}`, `Game: ${games[0]}`);
     const getVideo = await axios.get(`https://api.twitch.tv/helix/videos?user_id=${userId}`, {
         headers: twitchHeaders,
     });
     const getFollowers = await axios.get(`https://api.twitch.tv/helix/channels/followers?broadcaster_id=${userId}`, {
         headers: twitchHeaders,
     });
-
+    const getStreamerAvatar = await axios.get(`https://api.twitch.tv/helix/users?id=${userId}`, {
+        headers: twitchHeaders,
+    });
+    const isGameFavorite = await TwitchGame.findOne({ name: games[0] });
+    const game = {
+        name: games[0],
+        coverId: await getGameCover(games[0]),
+        favorite: !!isGameFavorite,
+    };
     interface IVideoData {
         id: string;
         title: string;
@@ -128,12 +166,6 @@ export const createVodSuggestion = async ({ streamId, userId, games, flags }: IC
     const { id, title, user_name: author, created_at: streamDate, url } = data;
     const followers = getFollowers.data.total;
 
-    console.log(streamId, id)
-    // Checks if streamId and VOD ID is the same, if not, the vod probably been deleted
-    // if (id !== streamId) {
-    //     return console.log(chalk.red('[Twitch Watchlist]: Stream ID and VOD ID aren\'t the same. Perhaps VOD isn\'t available anymore'));
-    // }
-
     // find existing suggestions with the same author and game
     const suggestionExists = await TwitchWatchlist.findOne({
         $or: [{ author, games: { $in: games }, relatedTo: { $exists: false } }, { id, relatedTo: { $exists: false } }],
@@ -141,7 +173,7 @@ export const createVodSuggestion = async ({ streamId, userId, games, flags }: IC
 
     if (suggestionExists && id === suggestionExists.id) {
         return TwitchWatchlist.findOneAndUpdate({ id }, {
-            $addToSet: { games },
+            $addToSet: { games, gamesData: game },
         });
     }
 
@@ -149,7 +181,9 @@ export const createVodSuggestion = async ({ streamId, userId, games, flags }: IC
         id,
         title,
         author,
+        avatar: getStreamerAvatar.data.data[0].profile_image_url,
         games,
+        gamesData: [game],
         url,
         meta: {
             streamDate,
