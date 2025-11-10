@@ -1,11 +1,16 @@
 import { Types, Schema, model } from 'mongoose';
 
+interface ITwitchWatchlistGame {
+    name: string;
+    coverId: string;
+    favorite?: boolean;
+}
 export interface ITwitchWatchlist {
     id: string;
     relatedTo: Types.ObjectId;
-    platform: 'Twitch' | 'YouTube';
     title: string;
     author: string;
+    avatar: string;
     url: string;
     thumbnail: string;
     meta: {
@@ -13,13 +18,12 @@ export interface ITwitchWatchlist {
         followers: number;
     };
     games: string[];
+    gamesData: ITwitchWatchlistGame[];
     priority: number;
-    notes: string;
     duration: string;
     flags: {
         isAvailable: boolean;
         isSuggestion: boolean;
-        isShortTerm: boolean;
         withNewGames: boolean;
         watchLater: boolean;
     };
@@ -35,12 +39,6 @@ const twitchWatchlistSchema: Schema<ITwitchWatchlist> = new Schema({
         unique: true,
     },
     relatedTo: Schema.Types.ObjectId,
-    platform: {
-        type: String,
-        enum: ['Twitch', 'YouTube'],
-        required: [true, 'Specify platform of the video'],
-        default: 'Twitch',
-    },
     title: {
         type: String,
         required: [true, 'Specify title of the vod'],
@@ -49,6 +47,7 @@ const twitchWatchlistSchema: Schema<ITwitchWatchlist> = new Schema({
         type: String,
         required: [true, 'Specify streamer name'],
     },
+    avatar: String,
     url: {
         type: String,
         required: [true, 'Specify link for the vod'],
@@ -62,12 +61,19 @@ const twitchWatchlistSchema: Schema<ITwitchWatchlist> = new Schema({
         type: [String],
         required: [true, 'Specify name of the games'],
     },
+    gamesData: [{
+        name: String,
+        coverId: String,
+        favorite: {
+            type: Boolean,
+            default: false,
+        },
+    }],
     priority: {
         type: Number,
         min: 1,
         max: 100,
     },
-    notes: String,
     duration: String,
     flags: {
         isAvailable: {
@@ -78,7 +84,6 @@ const twitchWatchlistSchema: Schema<ITwitchWatchlist> = new Schema({
             type: Boolean,
             default: false,
         },
-        isShortTerm: Boolean,
         withNewGames: {
             type: Boolean,
             default: false,
