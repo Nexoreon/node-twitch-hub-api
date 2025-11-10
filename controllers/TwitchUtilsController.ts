@@ -1,9 +1,11 @@
+/* eslint-disable no-await-in-loop */
+/* eslint-disable no-restricted-syntax */
 /* eslint-disable no-console */
 import axios from 'axios';
 import chalk from 'chalk';
 import catchAsync from '../utils/catchAsync';
 import { sendError, twitchHeaders } from '../utils/functions';
-import { convertDuration } from '../apps/TwitchCommon';
+import { convertDuration, getGameCover } from '../apps/TwitchCommon';
 import Settings from '../models/settingsModel';
 import TwitchReport from '../models/twitchReportModel';
 import TwitchReportBackup from '../models/twitchReportBackupModel';
@@ -11,6 +13,7 @@ import TwitchStreamer, { ITwitchStreamer } from '../models/twitchStreamerModel';
 import TwitchWatchlist, { ITwitchWatchlist } from '../models/twitchWatchlistModel';
 import { IResponseStreamer, IResponseVod } from '../types/types';
 import { IMongoDBError, OperationError } from './errorController';
+import TwitchGame from '../models/twitchGameModel';
 
 // possible errors
 const sendError404Streamer = sendError('Такого стримера не найдено в датабазе!', 404);
@@ -135,7 +138,7 @@ export const resetNotificationStatus = catchAsync(async (req, res) => {
 });
 
 export const getVodsData = catchAsync(async (req, res, next) => {
-    const vods = await TwitchWatchlist.find({ duration: { $exists: false }, platform: 'Twitch', 'flags.isAvailable': true });
+    const vods = await TwitchWatchlist.find({ duration: { $exists: false }, 'flags.isAvailable': true });
     const ids = vods.map((vod: ITwitchWatchlist) => `id=${vod.id}`);
 
     if (!ids.length) res.status(400).json({ status: 'fail', message: 'Видео без данных отсутствуют' });
@@ -219,4 +222,40 @@ export const setNotificationParam = catchAsync(async (req, res, next) => {
         status: 'ok',
         message: 'Статус уведомлений для этого стримера изменён',
     });
+});
+
+export const testFunction = catchAsync(async (req, res) => {
+    // const vods = await TwitchWatchlist.find({ gamesData: { $exists: false }, platform: { $ne: 'YouTube'} }).limit(50);
+    // console.log(vods);
+
+    // for (const vod of vods) {
+    //     const gamesData: any = [];
+    //     for (const game of vod.games) {
+    //         const coverId = await getGameCover(game);
+    //         const isGameFavorite = await TwitchGame.findOne({ name: game });
+    //         gamesData.push({
+    //             name: game,
+    //             coverId,
+    //             favorite: !!isGameFavorite,
+    //         });
+    //     };
+    //     await TwitchWatchlist.findByIdAndUpdate(vod._id, { gamesData });
+    //     console.log(gamesData);
+    // };
+
+    const vods = await TwitchWatchlist.find({ avatar: { $exists: false } });
+
+    for (const vod of vods) {
+        await axios.get(`https://api.twitch.tv/helix/users?login=${vod.author}`, {
+            headers: twitchHeaders,
+        })
+        .then(async (data) => {
+            await TwitchWatchlist.findByIdAndUpdate(vod._id, { avatar: data.data.data[0].profile_image_url });
+        })
+        .catch((err) => console.log(err.data));
+    }
+
+    res.status(200).json({
+        status: 'ok'
+    })
 });
