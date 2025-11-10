@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.checkActiveGame = exports.createVodSuggestion = exports.sendNotification = exports.createStats = exports.checkBannedStreamers = exports.banStreamer = exports.updateGameHistory = exports.convertDuration = void 0;
+exports.checkActiveGame = exports.createVodSuggestion = exports.sendNotification = exports.createStats = exports.checkBannedStreamers = exports.banStreamer = exports.updateGameHistory = exports.getGameCover = exports.convertDuration = void 0;
 /* eslint-disable camelcase */
 /* eslint-disable no-console */
 const axios_1 = __importDefault(require("axios"));
@@ -31,6 +31,27 @@ const convertDuration = (duration) => {
     return `${includesHours ? `${hours}:` : ''}${minutes}:${seconds}`;
 };
 exports.convertDuration = convertDuration;
+// Get game cover for games and vods
+const getGameCover = async (game) => {
+    try {
+        const response = await axios_1.default.post('https://api.igdb.com/v4/games', `fields name, cover.url; search "${game.toLowerCase()}";`, {
+            headers: {
+                'Client-ID': process.env.TWITCH_CLIENT,
+                Authorization: process.env.TWITCH_TOKEN,
+            },
+        });
+        const match = response.data.find(({ name }) => name.toLocaleLowerCase() === game.toLowerCase());
+        if (!match || !match.cover?.url)
+            return null;
+        const parts = match.cover.url.split('/');
+        const coverId = parts[parts.length - 1];
+        return coverId;
+    }
+    catch (e) {
+        console.log(chalk_1.default.red('[getGameCover]: Ошибка получения изображения для игры!'), e);
+    }
+};
+exports.getGameCover = getGameCover;
 const updateGameHistory = async ({ stream, isFavorite }) => {
     await twitchGameModel_1.default.findOneAndUpdate({ id: stream.game_id }, {
         $push: {
@@ -103,36 +124,42 @@ const sendNotification = ({ title, message, link, icon, meta }, method = { push:
     }
 };
 exports.sendNotification = sendNotification;
-const createVodSuggestion = async ({ streamId, userId, games, flags }) => {
-    console.log('createVodSuggesion', userId, games, flags);
+const createVodSuggestion = async ({ userId, games, flags }) => {
+    console.log(chalk_1.default.yellow('[Vod Suggestion]: Creating new suggestion...'), `Streamer: ${userId}`, `Game: ${games[0]}`);
     const getVideo = await axios_1.default.get(`https://api.twitch.tv/helix/videos?user_id=${userId}`, {
         headers: functions_1.twitchHeaders,
     });
     const getFollowers = await axios_1.default.get(`https://api.twitch.tv/helix/channels/followers?broadcaster_id=${userId}`, {
         headers: functions_1.twitchHeaders,
     });
+    const getStreamerAvatar = await axios_1.default.get(`https://api.twitch.tv/helix/users?id=${userId}`, {
+        headers: functions_1.twitchHeaders,
+    });
+    const isGameFavorite = await twitchGameModel_1.default.findOne({ name: games[0] });
+    const game = {
+        name: games[0],
+        coverId: await (0, exports.getGameCover)(games[0]),
+        favorite: !!isGameFavorite,
+    };
     const data = getVideo.data.data[0];
     const { id, title, user_name: author, created_at: streamDate, url } = data;
     const followers = getFollowers.data.total;
-    console.log(streamId, id);
-    // Checks if streamId and VOD ID is the same, if not, the vod probably been deleted
-    // if (id !== streamId) {
-    //     return console.log(chalk.red('[Twitch Watchlist]: Stream ID and VOD ID aren\'t the same. Perhaps VOD isn\'t available anymore'));
-    // }
     // find existing suggestions with the same author and game
     const suggestionExists = await twitchWatchlistModel_1.default.findOne({
         $or: [{ author, games: { $in: games }, relatedTo: { $exists: false } }, { id, relatedTo: { $exists: false } }],
     });
     if (suggestionExists && id === suggestionExists.id) {
         return twitchWatchlistModel_1.default.findOneAndUpdate({ id }, {
-            $addToSet: { games },
+            $addToSet: { games, gamesData: game },
         });
     }
     await twitchWatchlistModel_1.default.create({
         id,
         title,
         author,
+        avatar: getStreamerAvatar.data.data[0].profile_image_url,
         games,
+        gamesData: [game],
         url,
         meta: {
             streamDate,

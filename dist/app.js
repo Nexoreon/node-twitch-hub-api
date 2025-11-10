@@ -8,7 +8,7 @@ const morgan_1 = __importDefault(require("morgan"));
 const cors_1 = __importDefault(require("cors"));
 require("./modules/SchedulerModule/SchedulerModule");
 require("./modules/TelegramBot/TelegramBotModule");
-require("./modules/testModule");
+// import './modules/testModule';
 const appError_1 = __importDefault(require("./utils/appError"));
 const errorController_1 = __importDefault(require("./controllers/errorController"));
 const systemRoutes_1 = __importDefault(require("./routes/systemRoutes"));

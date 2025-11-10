@@ -8,12 +8,6 @@ const twitchWatchlistSchema = new mongoose_1.Schema({
         unique: true,
     },
     relatedTo: mongoose_1.Schema.Types.ObjectId,
-    platform: {
-        type: String,
-        enum: ['Twitch', 'YouTube'],
-        required: [true, 'Specify platform of the video'],
-        default: 'Twitch',
-    },
     title: {
         type: String,
         required: [true, 'Specify title of the vod'],
@@ -22,6 +16,7 @@ const twitchWatchlistSchema = new mongoose_1.Schema({
         type: String,
         required: [true, 'Specify streamer name'],
     },
+    avatar: String,
     url: {
         type: String,
         required: [true, 'Specify link for the vod'],
@@ -35,12 +30,19 @@ const twitchWatchlistSchema = new mongoose_1.Schema({
         type: [String],
         required: [true, 'Specify name of the games'],
     },
+    gamesData: [{
+            name: String,
+            coverId: String,
+            favorite: {
+                type: Boolean,
+                default: false,
+            },
+        }],
     priority: {
         type: Number,
         min: 1,
         max: 100,
     },
-    notes: String,
     duration: String,
     flags: {
         isAvailable: {
@@ -51,7 +53,6 @@ const twitchWatchlistSchema = new mongoose_1.Schema({
             type: Boolean,
             default: false,
         },
-        isShortTerm: Boolean,
         withNewGames: {
             type: Boolean,
             default: false,

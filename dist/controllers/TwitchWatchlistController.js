@@ -15,7 +15,7 @@ const twitchWatchlistModel_1 = __importDefault(require("../models/twitchWatchlis
 const sendError404 = (0, functions_1.sendError)('Такого видео не существует!', 404);
 const sendErrorParamRelated = (0, functions_1.sendError)('Не указан ID родительского видео!', 400);
 const sendErrorAddVideo = (0, functions_1.sendError)('Ошибка добавления видео!', 500);
-const sendErrorPlatform = (0, functions_1.sendError)('Неопознанная платформа. Поддерживается только Twitch и YouTube', 400);
+const sendErrorPlatform = (0, functions_1.sendError)('Неопознанная платформа. Поддерживается только Twitch', 400);
 const sendErrorDuplicate = (0, functions_1.sendError)('Такое видео уже было добавлено ранее!', 409);
 const suggestionsQuery = { 'flags.isSuggestion': true, relatedTo: { $exists: false } };
 exports.getVideos = (0, catchAsync_1.default)(async (req, res) => {
@@ -73,9 +73,13 @@ exports.getVideos = (0, catchAsync_1.default)(async (req, res) => {
     });
 });
 exports.getSuggestions = (0, catchAsync_1.default)(async (req, res) => {
-    const { limit } = req.query;
+    const { limit, game, streamer } = req.query;
     const suggestions = await twitchWatchlistModel_1.default.aggregate([
-        { $match: suggestionsQuery },
+        { $match: {
+                ...suggestionsQuery,
+                ...(game && { games: { $in: [game] } }),
+                ...(streamer && { author: streamer }),
+            } },
         { $lookup: {
                 from: 'ma_twitch-watchlists',
                 localField: '_id',
@@ -121,33 +125,9 @@ exports.getVideo = (0, catchAsync_1.default)(async (req, res, next) => {
 });
 exports.addVideo = (0, catchAsync_1.default)(async (req, res, next) => {
     const { url } = req.body;
-    let splitedUrl = url.split('/');
-    let videoId = splitedUrl[splitedUrl.length - 1];
-    if (url.includes('youtube')) {
-        splitedUrl = url.split('=');
-        // eslint-disable-next-line prefer-destructuring
-        videoId = splitedUrl[1];
-        await axios_1.default.get(`https://www.googleapis.com/youtube/v3/videos?key=${process.env.YOUTUBE_API_KEY}&id=${videoId}&part=snippet,contentDetails`)
-            .then(async (resp) => {
-            const video = resp.data.items[0];
-            const vidInfo = video.snippet;
-            const duration = video.contentDetails.duration.replace('PT', '').replace('H', ':').replace('M', ':').replace('S', '');
-            req.body = {
-                ...req.body,
-                id: videoId,
-                platform: 'YouTube',
-                title: vidInfo.title,
-                author: vidInfo.channelTitle,
-                thumbnail: vidInfo.thumbnails.medium.url,
-                meta: {
-                    streamDate: Date.now(),
-                    followers: 0,
-                },
-                duration,
-            };
-        });
-    }
-    else if (url.includes('twitch.tv')) {
+    const splitedUrl = url.split('/');
+    const videoId = splitedUrl[splitedUrl.length - 1];
+    if (url.includes('twitch.tv')) {
         await axios_1.default.get(`https://api.twitch.tv/helix/videos?id=${videoId}`, {
             headers: functions_1.twitchHeaders,
         })
@@ -158,7 +138,6 @@ exports.addVideo = (0, catchAsync_1.default)(async (req, res, next) => {
             req.body = {
                 ...req.body,
                 id: videoId,
-                platform: 'Twitch',
                 title: vidInfo.title,
                 author: vidInfo.user_name,
                 ...(!isLiveVod && { duration, thumbnail: vidInfo.thumbnail_url }),
@@ -228,7 +207,7 @@ exports.deleteVideo = (0, catchAsync_1.default)(async (req, res, next) => {
     });
 });
 exports.moveSuggestion = (0, catchAsync_1.default)(async (req, res, next) => {
-    const { id, priority, watchLater, notes } = req.body;
+    const { id, priority, watchLater } = req.body;
     await axios_1.default.get(`https://api.twitch.tv/helix/videos?id=${id}`, {
         headers: functions_1.twitchHeaders,
     })
@@ -238,7 +217,6 @@ exports.moveSuggestion = (0, catchAsync_1.default)(async (req, res, next) => {
         const isLiveVod = vidInfo.thumbnail_url.includes('404_processing');
         req.body = {
             priority,
-            notes,
             ...(!isLiveVod && { duration, thumbnail: vidInfo.thumbnail_url }),
         };
     })
@@ -256,7 +234,7 @@ exports.moveSuggestion = (0, catchAsync_1.default)(async (req, res, next) => {
     });
 });
 exports.checkVideosAvailability = (0, catchAsync_1.default)(async (req, res) => {
-    const list = await twitchWatchlistModel_1.default.find({ platform: 'Twitch', 'flags.isAvailable': { $ne: false } });
+    const list = await twitchWatchlistModel_1.default.find({ 'flags.isAvailable': { $ne: false } });
     const currentIds = list.map((vid) => vid.id);
     const deletedVideos = [];
     const idParts = [];
