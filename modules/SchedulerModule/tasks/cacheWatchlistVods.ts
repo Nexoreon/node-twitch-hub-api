@@ -8,7 +8,7 @@ import TwitchWatchlist, { ITwitchWatchlist } from '../../../models/twitchWatchli
 
 export default async () => {
     console.log(chalk.yellow('[Twitch Watchlist]: Запуск проверки и получения данных для ожидающих видео...'));
-    const vods = await TwitchWatchlist.find({ duration: { $exists: false }, platform: 'Twitch', 'flags.isAvailable': true });
+    const vods = await TwitchWatchlist.find({ duration: { $exists: false }, 'flags.isAvailable': true });
     const ids = vods.map((vod: ITwitchWatchlist) => `id=${vod.id}`);
 
     if (!ids.length) console.log(chalk.yellow('[Twitch Watchlist]: Видео без данных отсутствуют'));
