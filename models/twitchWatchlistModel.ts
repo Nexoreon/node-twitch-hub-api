@@ -1,8 +1,12 @@
 import { Types, Schema, model } from 'mongoose';
 
 interface ITwitchWatchlistGame {
+    _doc: any,
     name: string;
+    description: string;
     coverId: string;
+    screenshots: string[];
+    tags: string[];
     favorite?: boolean;
 }
 export interface ITwitchWatchlist {
@@ -64,6 +68,9 @@ const twitchWatchlistSchema: Schema<ITwitchWatchlist> = new Schema({
     gamesData: [{
         name: String,
         coverId: String,
+        description: String,
+        screenshots: [String],
+        tags: [String],
         favorite: {
             type: Boolean,
             default: false,
