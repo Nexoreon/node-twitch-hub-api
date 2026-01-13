@@ -201,33 +201,16 @@ exports.setNotificationParam = (0, catchAsync_1.default)(async (req, res, next) 
     });
 });
 exports.testFunction = (0, catchAsync_1.default)(async (req, res) => {
-    // const vods = await TwitchWatchlist.find({ gamesData: { $exists: false }, platform: { $ne: 'YouTube'} }).limit(50);
-    // console.log(vods);
-    // for (const vod of vods) {
-    //     const gamesData: any = [];
-    //     for (const game of vod.games) {
-    //         const coverId = await getGameCover(game);
-    //         const isGameFavorite = await TwitchGame.findOne({ name: game });
-    //         gamesData.push({
-    //             name: game,
-    //             coverId,
-    //             favorite: !!isGameFavorite,
-    //         });
-    //     };
-    //     await TwitchWatchlist.findByIdAndUpdate(vod._id, { gamesData });
-    //     console.log(gamesData);
-    // };
-    const vods = await twitchWatchlistModel_1.default.find({ avatar: { $exists: false } });
-    for (const vod of vods) {
-        await axios_1.default.get(`https://api.twitch.tv/helix/users?login=${vod.author}`, {
-            headers: functions_1.twitchHeaders,
-        })
-            .then(async (data) => {
-            await twitchWatchlistModel_1.default.findByIdAndUpdate(vod._id, { avatar: data.data.data[0].profile_image_url });
-        })
-            .catch((err) => console.log(err.data));
-    }
+    const vod = await twitchWatchlistModel_1.default.findOneAndUpdate({ 'gamesData.description': { $ne: true } }).sort('-addedAt');
+    const games = vod.gamesData;
+    const newGamesData = await Promise.all(games.map(async (game, ind) => {
+        const meta = await (0, TwitchCommon_1.getGameMeta)(game.name);
+        return { ...games[ind]._doc, ...meta };
+    }));
+    await twitchWatchlistModel_1.default.findByIdAndUpdate(vod._id, {
+        gamesData: newGamesData,
+    });
     res.status(200).json({
-        status: 'ok'
+        status: 'ok',
     });
 });

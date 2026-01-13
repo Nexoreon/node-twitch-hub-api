@@ -33,6 +33,9 @@ const twitchWatchlistSchema = new mongoose_1.Schema({
     gamesData: [{
             name: String,
             coverId: String,
+            description: String,
+            screenshots: [String],
+            tags: [String],
             favorite: {
                 type: Boolean,
                 default: false,
