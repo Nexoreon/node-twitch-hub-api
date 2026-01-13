@@ -28,18 +28,33 @@ export const convertDuration = (duration: string) => {
 };
 
 // Get game cover for games and vods
-export const getGameCover = async (game: string) => {
+export const getGameMeta = async (game: string) => {
     interface IGameIGDB {
         id: string;
         cover: {
             id: string;
             url: string;
         },
+        summary?: string;
+        screenshots?: {
+            id: string,
+            url: string,
+            width: string,
+        }[],
+        genres?: {
+            id: string,
+            name: string,
+        }[],
+        themes?: {
+            id: string,
+            name: string,
+        }[],
         name: string,
     }
 
     try {
-        const response = await axios.post<IGameIGDB[]>('https://api.igdb.com/v4/games', `fields name, cover.url; search "${game.toLowerCase()}";`, {
+        const reqBody = `fields name, storyline, summary, cover.url, screenshots.width, screenshots.url, themes.name, genres.name; search "${game.toLowerCase()}";`;
+        const response = await axios.post<IGameIGDB[]>('https://api.igdb.com/v4/games', reqBody, {
             headers: {
                 'Client-ID': process.env.TWITCH_CLIENT!,
                 Authorization: process.env.TWITCH_TOKEN!,
@@ -49,11 +64,14 @@ export const getGameCover = async (game: string) => {
         const match = response.data.find(({ name }) => name.toLocaleLowerCase() === game.toLowerCase());
         if (!match || !match.cover?.url) return null;
 
+        const description = match.summary;
+        const screenshots = match.screenshots ? match.screenshots.map((scr) => scr.url.replace('//', 'https://').replace('t_thumb', 't_1080p')) : [];
+        const tags = [...(match.genres ? match.genres.map((g) => g.name) : []), ...(match.themes ? match.themes.map((t) => t.name) : [])];
         const parts = match.cover.url.split('/');
         const coverId = parts[parts.length - 1];
-        return coverId;
+        return { coverId, tags, screenshots, description };
     } catch (e) {
-        console.log(chalk.red('[getGameCover]: Ошибка получения изображения для игры!'), e);
+        console.log(chalk.red('[getGameCover]: Ошибка получения данных для игры!'), e);
     }
 };
 
@@ -150,10 +168,11 @@ export const createVodSuggestion = async ({ userId, games, flags }: ICreateVodPr
         headers: twitchHeaders,
     });
     const isGameFavorite = await TwitchGame.findOne({ name: games[0] });
+    const gameMeta = await getGameMeta(games[0]);
     const game = {
         name: games[0],
-        coverId: await getGameCover(games[0]),
         favorite: !!isGameFavorite,
+        ...gameMeta,
     };
     interface IVideoData {
         id: string;
